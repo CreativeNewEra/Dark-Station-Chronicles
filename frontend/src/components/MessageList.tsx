@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { MessageListProps } from './types';
 
 const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
@@ -8,7 +9,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
         {messages.map((msg, idx) => (
             <div
             key={idx}
-            className={`p-2 rounded ${
+            className={`p-3 rounded transition-all duration-300 ${
                 msg.type === 'player'
                 ? 'bg-gray-800 text-blue-400'
                 : msg.type === 'error'
@@ -16,8 +17,16 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                 : 'bg-gray-700'
             }`}
             >
-            {msg.type === 'player' && <span>&gt; </span>}
-            {msg.content}
+            {msg.type === 'player' ? (
+                <>
+                <span className="text-blue-500 font-semibold">&gt; </span>
+                {msg.content}
+                </>
+            ) : (
+                <div className="prose prose-invert max-w-none">
+                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+            )}
             </div>
         ))}
         <div ref={ref} />

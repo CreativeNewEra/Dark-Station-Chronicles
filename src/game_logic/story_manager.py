@@ -1,205 +1,113 @@
 from typing import Dict, List, Optional
-import logging
-from dataclasses import dataclass, field
-
-logger = logging.getLogger(__name__)
+from dataclasses import dataclass
 
 @dataclass
-class Character:
-    """Player character data structure."""
-    char_class: str
+class Player:
     health: int = 100
-    max_health: int = 100
     energy: int = 100
     level: int = 1
     exp: int = 0
-    inventory: List[str] = field(default_factory=list)
+    inventory: List[str] = None
+    character_class: Optional[str] = None
 
     def __post_init__(self):
-        # Set class-specific stats
-        if self.char_class == "cybernetic":
-            self.strength = 15
-            self.tech = 12
-            self.agility = 8
-            self.special_ability = "shield_matrix"
-        elif self.char_class == "psionic":
-            self.strength = 6
-            self.tech = 10
-            self.agility = 12
-            self.special_ability = "mind_blast"
-        elif self.char_class == "hunter":
-            self.strength = 10
-            self.tech = 8
-            self.agility = 15
-            self.special_ability = "stealth_field"
+        if self.inventory is None:
+            self.inventory = []
 
 @dataclass
 class Room:
-    """Game room data structure."""
-    name: str
     description: str
-    exits: Dict[str, str]
-    items: List[str] = field(default_factory=list)
-    enemies: List[str] = field(default_factory=list)
-    requires_key: bool = False
-    is_dark: bool = False
+    exits: Dict[str, str]  # direction -> room_id mapping
 
 class StoryManager:
-    """Manages game state and story progression."""
-
     def __init__(self):
-        self.current_room = "cargo_hold"
-        self.player: Optional[Character] = None
-        self.game_state = "character_creation"
-        self.initialize_rooms()
+        self.player = Player()
+        self.current_room = "start"
 
-    def initialize_rooms(self):
-        """Initialize game rooms and their connections."""
+        # Initialize rooms
         self.rooms = {
-            "cargo_hold": Room(
-                name="Abandoned Cargo Hold",
-                description="A vast chamber filled with forgotten cargo containers. Emergency lights cast long shadows "
-                           "between the towering stacks. The air is thick with the smell of rust and ozone.",
-                exits={"north": "maintenance_corridor", "east": "power_junction"},
-                items=["medkit"],
-                enemies=["corrupted_drone"]
+            "start": Room(
+                description="You find yourself in the dimly lit reception area of Dark Station. "
+                          "Emergency lights cast an eerie red glow across abandoned terminals.",
+                exits={"north": "corridor", "east": "security"}
             ),
-            "maintenance_corridor": Room(
-                name="Maintenance Corridor",
-                description="A narrow corridor lined with exposed pipes and damaged control panels. "
-                           "Strange whispers seem to echo from the ventilation system.",
-                exits={"south": "cargo_hold", "west": "bio_lab"},
-                items=["energy_cell"],
-                is_dark=True
+            "corridor": Room(
+                description="A long corridor stretches before you. Loose cables hang from the ceiling, "
+                          "occasionally sparking with residual power.",
+                exits={"south": "start", "north": "lab"}
             ),
-            "power_junction": Room(
-                name="Power Junction",
-                description="A circular room dominated by a crackling energy core. Arcs of electricity "
-                           "jump between damaged conduits, creating an ever-shifting dance of light and shadow.",
-                exits={"west": "cargo_hold", "north": "psi_chamber"},
-                items=["power_cell"],
-                enemies=["rogue_bot"]
+            "security": Room(
+                description="The security office is a mess of broken monitors and scattered datapads. "
+                          "A powered-down security robot sits motionless in the corner.",
+                exits={"west": "start"}
             ),
-            "bio_lab": Room(
-                name="Abandoned Bio Lab",
-                description="A research lab in disarray. Shattered stasis tubes line the walls, their contents long gone. "
-                           "Holographic warnings flicker weakly in the darkness.",
-                exits={"east": "maintenance_corridor"},
-                items=["health_boost", "research_data"],
-                requires_key=True
-            ),
-            "psi_chamber": Room(
-                name="Psi Amplification Chamber",
-                description="A mysterious chamber filled with crystalline structures that pulse with inner light. "
-                           "The air itself seems to vibrate with psychic energy.",
-                exits={"south": "power_junction"},
-                items=["psi_shard"],
-                enemies=["shadow_entity"]
+            "lab": Room(
+                description="This appears to be a research laboratory. Strange equipment lines the walls, "
+                          "and holographic displays flicker with corrupted data.",
+                exits={"south": "corridor"}
             )
         }
 
     def get_opening_text(self) -> str:
-        """Get the game's opening text."""
-        return """Welcome to Dark Station Chronicles
-
-Choose your class to begin:
-
-CYBERNETIC
-Enhanced humans with integrated tech and defensive capabilities.
-Special: Integrated shield system and enhanced strength.
-
-PSIONIC
-Psychically augmented individuals who can manipulate energy and minds.
-Special: Psychic abilities and energy manipulation.
-
-HUNTER
-Stealthy operatives with advanced camouflage and targeting systems.
-Special: Stealth field generator and enhanced accuracy.
-
-Type 'choose [class]' to begin (e.g., 'choose cybernetic')"""
+        return (
+            "Welcome to Dark Station Chronicles!\n\n"
+            "In the depths of space, aboard an abandoned research station, your story begins. "
+            "Choose your path carefully as you uncover the mysteries that lie within.\n\n"
+            "Available character classes:\n"
+            "- Cybernetic: Enhanced with advanced technology and neural interfaces\n"
+            "- Psionic: Gifted with psychic abilities and enhanced perception\n"
+            "- Hunter: Skilled in survival, tracking, and combat techniques\n\n"
+            "To begin, select your class with the command: /select-class [classname]\n"
+            "Example: /select-class cybernetic\n\n"
+            f"{self.rooms[self.current_room].description}"
+        )
 
     def process_command(self, command: str) -> str:
-        """Process player commands and return response."""
         command = command.lower().strip()
 
-        # Handle character creation
-        if self.game_state == "character_creation":
-            return self._handle_character_creation(command)
+        # Handle movement
+        if command in ["north", "south", "east", "west"]:
+            return self._handle_movement(command)
 
-        # Handle game commands
-        if command == "look":
-            return self._handle_look_command()
-        elif command == "status":
-            return self._handle_status_command()
-        elif command.startswith("go "):
-            return self._handle_movement_command(command[3:])
-        elif command == "help":
-            return self._handle_help_command()
+        # Handle looking around
+        elif command in ["look", "look around"]:
+            return self.rooms[self.current_room].description
 
-        return "I don't understand that command. Type 'help' for available commands."
+        # Handle examining
+        elif command.startswith("examine"):
+            return self._handle_examine(command)
 
-    def _handle_character_creation(self, command: str) -> str:
-        """Handle character creation commands."""
-        if not command.startswith("choose "):
-            return "Please choose your class: cybernetic, psionic, or hunter"
+        # Handle class selection
+        elif command.startswith("/select-class"):
+            return self._handle_class_selection(command)
 
-        char_class = command.split()[1]
-        if char_class not in ["cybernetic", "psionic", "hunter"]:
-            return "Invalid class. Choose cybernetic, psionic, or hunter."
+        # Default response
+        return "I don't understand that command."
 
-        self.player = Character(char_class)
-        self.game_state = "playing"
-        return f"You have chosen the {char_class} class. Your journey begins...\n\n{self._get_room_description()}"
-
-    def _handle_look_command(self) -> str:
-        """Handle the look command."""
-        return self._get_room_description()
-
-    def _handle_status_command(self) -> str:
-        """Handle the status command."""
-        if not self.player:
-            return "No character created yet."
-        return (f"Health: {self.player.health}/{self.player.max_health}\n"
-                f"Energy: {self.player.energy}\n"
-                f"Level: {self.player.level} (EXP: {self.player.exp})\n"
-                f"Class: {self.player.char_class}\n"
-                f"Special Ability: {self.player.special_ability}")
-
-    def _handle_movement_command(self, direction: str) -> str:
-        """Handle movement commands."""
+    def _handle_movement(self, direction: str) -> str:
         current_room = self.rooms[self.current_room]
         if direction in current_room.exits:
-            next_room_id = current_room.exits[direction]
-            next_room = self.rooms[next_room_id]
-
-            if next_room.requires_key and "keycard" not in self.player.inventory:
-                return "This door requires a keycard to open."
-
-            if next_room.is_dark and "light_source" not in self.player.inventory:
-                return "It's too dark to enter without a light source."
-
-            self.current_room = next_room_id
-            return f"You move {direction}.\n\n{self._get_room_description()}"
+            self.current_room = current_room.exits[direction]
+            return f"You move {direction}.\n\n{self.rooms[self.current_room].description}"
         return f"You cannot go {direction} from here."
 
-    def _handle_help_command(self) -> str:
-        """Handle the help command."""
-        return """Available commands:
-- look : Look around the room
-- status : Check your character's status
-- go [direction] : Move in a direction (north, south, east, west)
-- help : Show this help message"""
+    def _handle_examine(self, command: str) -> str:
+        target = command[8:].strip()  # Remove "examine " from the start
 
-    def _get_room_description(self) -> str:
-        """Get the current room's full description."""
-        room = self.rooms[self.current_room]
-        exits_str = ", ".join(room.exits.keys())
-        items_str = ", ".join(room.items) if room.items else "nothing"
+        # Add some basic examination responses
+        if target == "room" or target == "area":
+            return self.rooms[self.current_room].description
+        elif target == "self":
+            return f"Health: {self.player.health}%\nEnergy: {self.player.energy}%\nLevel: {self.player.level}"
 
-        description = f"{room.description}\n\nExits: {exits_str}\nItems: {items_str}"
+        return f"You examine the {target}, but find nothing particularly interesting."
 
-        if room.enemies:
-            enemies_str = ", ".join(room.enemies)
-            description += f"\nEnemies present: {enemies_str}"
+    def _handle_class_selection(self, command: str) -> str:
+        class_name = command.split()[-1].lower()
+        valid_classes = ["cybernetic", "psionic", "hunter"]
 
-        return description
+        if class_name in valid_classes:
+            self.player.character_class = class_name
+            return f"You have chosen the {class_name} class. Your journey begins..."
+
+        return "Invalid class. Choose from: cybernetic, psionic, or hunter."

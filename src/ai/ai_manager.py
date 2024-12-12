@@ -5,10 +5,12 @@ import anthropic
 from llama_cpp import Llama
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class AIModelBackend(ABC):
     """Abstract base class for AI model backends"""
@@ -22,6 +24,7 @@ class AIModelBackend(ABC):
     def is_available(self) -> bool:
         """Check if the model is available"""
         pass
+
 
 class ClaudeBackend(AIModelBackend):
     """Claude API backend"""
@@ -43,11 +46,8 @@ class ClaudeBackend(AIModelBackend):
             response = self.client.messages.create(
                 model="claude-3-opus-20240229",
                 max_tokens=1024,
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }],
-                temperature=0.7
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
             )
             return response.content[0].text
         except Exception as e:
@@ -57,6 +57,7 @@ class ClaudeBackend(AIModelBackend):
     def is_available(self) -> bool:
         return self.client is not None
 
+
 class LlamaBackend(AIModelBackend):
     """Local Llama.cpp backend"""
 
@@ -65,11 +66,11 @@ class LlamaBackend(AIModelBackend):
         if model_path and os.path.exists(model_path):
             try:
                 self.model = Llama(
-    model_path=model_path,
-    n_ctx=2048,
-    n_threads=4,
-    n_gpu_layers=32  # This enables GPU acceleration
-)
+                    model_path=model_path,
+                    n_ctx=2048,
+                    n_threads=4,
+                    n_gpu_layers=32,  # This enables GPU acceleration
+                )
                 logger.info("Successfully initialized Llama backend")
             except Exception as e:
                 self.model = None
@@ -84,12 +85,9 @@ class LlamaBackend(AIModelBackend):
 
         try:
             response = self.model(
-                prompt,
-                max_tokens=512,
-                temperature=0.7,
-                stop=["Human:", "Assistant:"]
+                prompt, max_tokens=512, temperature=0.7, stop=["Human:", "Assistant:"]
             )
-            return response['choices'][0]['text'].strip()
+            return response["choices"][0]["text"].strip()
         except Exception as e:
             logger.error(f"Error getting Llama response: {e}")
             raise
@@ -97,80 +95,61 @@ class LlamaBackend(AIModelBackend):
     def is_available(self) -> bool:
         return self.model is not None
 
-class AIManager:
-    """Enhanced AI Manager supporting multiple model backends"""
 
+class AIManager:
     def __init__(self):
         load_dotenv()
 
         # Initialize backends
-        self.backends = {
-            "claude": ClaudeBackend(),
-            "llama": LlamaBackend()
-        }
+        self.backends = {"claude": ClaudeBackend(), "llama": LlamaBackend()}
 
-        # Set default backend
         self._current_backend = os.getenv("DEFAULT_AI_BACKEND", "claude")
 
-        # Game context for AI responses
-        self.game_context = """You are the AI game master for Dark Station Chronicles.
-        The game is set in an abandoned space station where players can choose between cybernetic,
-        psionic, and hunter classes. Respond in character as an atmospheric, engaging game master."""
+        # Conversation memory
+        self.conversation_history = []
+        self.memory_limit = 10  # Keep last 10 exchanges
+
+        # Enhanced game context with character classes
+        self.game_context = {
+            "base": """You are the AI game master for Dark Station Chronicles.
+                    The game is set in an abandoned space station where mysterious events occur.""",
+            "cybernetic": """Use technical, precise language. Reference cybernetic enhancements
+                         and technological solutions. Interface with station systems.""",
+            "psionic": """Use mystical, ethereal language. Reference psychic phenomena
+                      and emotional undercurrents. Sense station mysteries.""",
+            "hunter": """Use tactical, survival-focused language. Reference tracking,
+                     stealth, and resource management. Analyze station threats.""",
+        }
 
     @property
     def current_backend(self) -> str:
         """Get the name of the current backend"""
         return self._current_backend
 
-    @property
-    def available_backends(self) -> List[str]:
-        """Get list of available backends"""
-        return [name for name, backend in self.backends.items()
-                if backend.is_available()]
+    def _construct_prompt(
+        self, user_input: str, game_state: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """Construct the full prompt including context and conversation history"""
+        prompt_parts = []
 
-    def switch_backend(self, backend_name: Literal["claude", "llama"]) -> bool:
-        """Switch the active AI backend"""
-        logger.info(f"Attempting to switch to {backend_name} backend")
+        # Add base context
+        prompt_parts.append(self.game_context["base"])
 
-        if backend_name not in self.backends:
-            logger.error(f"Unknown backend: {backend_name}")
-            return False
+        # Add character-specific context if available
+        if game_state and "character_class" in game_state:
+            char_class = game_state["character_class"]
+            if char_class in self.game_context:
+                prompt_parts.append(self.game_context[char_class])
 
-        if not self.backends[backend_name].is_available():
-            logger.error(f"Backend {backend_name} is not available")
-            return False
+        # Add relevant conversation history
+        if self.conversation_history:
+            history = "\nRecent interactions:\n"
+            for exchange in self.conversation_history[-self.memory_limit :]:
+                history += f"Player: {exchange['input']}\n"
+                history += f"Response: {exchange['response']}\n"
+            prompt_parts.append(history)
 
-        self._current_backend = backend_name
-        logger.info(f"Successfully switched to {backend_name} backend")
-        return True
-
-    def get_ai_response(self, prompt: str, game_state: Optional[Dict[str, Any]] = None) -> str:
-        """Get AI response using the current backend"""
-        try:
-            backend = self.backends[self.current_backend]
-            if not backend.is_available():
-                # Try to fall back to another available backend
-                for name, fallback in self.backends.items():
-                    if name != self.current_backend and fallback.is_available():
-                        logger.info(f"Falling back to {name} backend")
-                        backend = fallback
-                        break
-                else:
-                    raise RuntimeError("No AI backends available")
-
-            # Construct the full prompt
-            full_prompt = self._construct_prompt(prompt, game_state)
-
-            return backend.generate_response(full_prompt)
-
-        except Exception as e:
-            logger.error(f"Error getting AI response: {e}")
-            return "I apologize, but I encountered an error processing your request."
-
-    def _construct_prompt(self, user_input: str, game_state: Optional[Dict[str, Any]] = None) -> str:
-        """Construct the full prompt including context and game state"""
-        prompt_parts = [self.game_context]
-
+        # Add current game state
         if game_state:
             state_context = f"""
             Current game state:
@@ -181,11 +160,37 @@ class AIManager:
             prompt_parts.append(state_context)
 
         prompt_parts.append(f"Player input: {user_input}")
-        prompt_parts.append("Provide an engaging, atmospheric response as the game master:")
-
         return "\n".join(prompt_parts)
 
-    def update_game_context(self, new_context: str):
-        """Update the base game context used for AI responses"""
-        self.game_context = new_context
-        logger.info("Updated game context")
+    def get_ai_response(
+        self, prompt: str, game_state: Optional[Dict[str, Any]] = None
+    ) -> str:
+        try:
+            backend = self.backends[self._current_backend]
+            if not backend.is_available():
+                # Try to fall back to another available backend
+                for name, fallback in self.backends.items():
+                    if name != self._current_backend and fallback.is_available():
+                        logger.info(f"Falling back to {name} backend")
+                        backend = fallback
+                        break
+                else:
+                    raise RuntimeError("No AI backends available")
+
+            full_prompt = self._construct_prompt(prompt, game_state)
+            response = backend.generate_response(full_prompt)
+
+            # Store the exchange in conversation history
+            self.conversation_history.append(
+                {
+                    "input": prompt,
+                    "response": response,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Error getting AI response: {e}")
+            return "I apologize, but I encountered an error processing your request."

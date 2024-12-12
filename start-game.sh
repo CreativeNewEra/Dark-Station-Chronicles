@@ -42,15 +42,19 @@ check_environment() {
         fi
     fi
 
-    # Check for node_modules
-    if [ ! -d "$PROJECT_ROOT/frontend/node_modules" ]; then
+    # Check for node_modules and install/update dependencies
+    cd "$PROJECT_ROOT/frontend"
+    if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
         echo -e "${YELLOW}Installing frontend dependencies...${NC}"
-        cd "$PROJECT_ROOT/frontend"
         npm install
+        npm install react-markdown @tailwindcss/typography
         if [ $? -ne 0 ]; then
             echo -e "${RED}Failed to install frontend dependencies!${NC}"
             exit 1
         fi
+    else
+        echo -e "${YELLOW}Checking for new dependencies...${NC}"
+        npm install react-markdown @tailwindcss/typography
     fi
 }
 
