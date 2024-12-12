@@ -2,15 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import StatsPanel from './StatsPanel';
 import ModelSelector from './ModelSelector';
 import MessageList from './MessageList';
+import { GameState, Message } from './types';
 
-const GameInterface = () => {
-    const [messages, setMessages] = useState([]);
+const GameInterface: React.FC = () => {
+    const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
-    const [gameState, setGameState] = useState(null);
-    const [currentModel, setCurrentModel] = useState('claude');
+    const [gameState, setGameState] = useState<GameState | null>(null);
+    const [currentModel, setCurrentModel] = useState<'claude' | 'llama'>('claude');
     const [isModelSwitching, setIsModelSwitching] = useState(false);
     const [isThinking, setIsThinking] = useState(false);
-    const messagesEndRef = useRef(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,7 +36,7 @@ const GameInterface = () => {
         }
     };
 
-    const switchModel = async (newModel) => {
+    const switchModel = async (newModel: 'claude' | 'llama') => {
         try {
             setIsModelSwitching(true);
             const response = await fetch('http://localhost:8000/game/switch-model', {
@@ -58,7 +59,7 @@ const GameInterface = () => {
         }
     };
 
-    const addMessage = (type, content) => {
+    const addMessage = (type: Message['type'], content: string) => {
         setMessages((prev) => [...prev, { type, content }]);
     };
 
@@ -134,7 +135,7 @@ const GameInterface = () => {
         aria-label="Send Command"
         >
         {isThinking ? (
-            <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+            <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
         ) : (
             'Send'
         )}
