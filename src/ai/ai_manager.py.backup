@@ -1,0 +1,81 @@
+import os
+import logging
+from typing import Optional, Dict, Any
+import anthropic
+from dotenv import load_dotenv
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class AIManager:
+    """Manages AI integration for the game."""
+
+    def __init__(self, config_path: Optional[str] = None):
+        """Initialize AI Manager."""
+        # Load environment variables
+        load_dotenv()
+
+        # Initialize Anthropic client
+        self.api_key = os.getenv("ANTHROPIC_API_KEY")
+        if self.api_key:
+            self.client = anthropic.Client(api_key=self.api_key)
+            logger.info("Successfully initialized Anthropic client")
+        else:
+            logger.warning("No Anthropic API key found in environment variables")
+            self.client = None
+
+        # Game context for AI responses
+        self.game_context = """You are the AI game master for a sci-fi RPG called Dark Station Chronicles.
+        The game is set in an abandoned space station where players can choose between cybernetic,
+        psionic, and hunter classes. Respond in character as an atmospheric, engaging game master."""
+
+    def get_ai_response(self, prompt: str, game_state: Optional[Dict[str, Any]] = None) -> str:
+        """Get AI response for the given prompt."""
+        if not self.client:
+            return "AI integration not configured. Please set up your API key."
+
+        try:
+            # Construct the full prompt with context
+            full_prompt = self._construct_prompt(prompt, game_state)
+
+            # Get response from Claude
+            response = self.client.messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=1024,
+                messages=[{
+                    "role": "user",
+                    "content": full_prompt
+                }],
+                temperature=0.7
+            )
+
+            return response.content[0].text
+
+        except Exception as e:
+            logger.error(f"Error getting AI response: {e}")
+            return "I apologize, but I encountered an error processing your request."
+
+    def _construct_prompt(self, user_input: str, game_state: Optional[Dict[str, Any]] = None) -> str:
+        """Construct the full prompt including context and game state."""
+        prompt_parts = [self.game_context]
+
+        if game_state:
+            state_context = f"""
+            Current game state:
+            - Location: {game_state.get('current_room', 'unknown')}
+            - Player class: {game_state.get('player_class', 'unknown')}
+            - Health: {game_state.get('health', 0)}
+            - Energy: {game_state.get('energy', 0)}
+            """
+            prompt_parts.append(state_context)
+
+        prompt_parts.append(f"Player input: {user_input}")
+        prompt_parts.append("Provide an engaging, atmospheric response as the game master:")
+
+        return "\n".join(prompt_parts)
+
+    def update_game_context(self, new_context: str):
+        """Update the base game context used for AI responses."""
+        self.game_context = new_context
+        logger.info("Updated game context")
