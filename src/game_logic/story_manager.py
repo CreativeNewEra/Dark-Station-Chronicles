@@ -16,7 +16,10 @@ class Room:
     exits: Dict[str, str]  # direction -> room_id mapping
 
 class StoryManager:
+    """Handle player state and command processing for the text adventure."""
+
     def __init__(self):
+        """Initialize the player and starting rooms."""
         self.player = Player()
         self.current_room = "start"
 
@@ -45,6 +48,7 @@ class StoryManager:
         }
 
     def get_opening_text(self) -> str:
+        """Return the introductory text shown at game start."""
         return (
             "Welcome to Dark Station Chronicles!\n\n"
             "In the depths of space, aboard an abandoned research station, your story begins. "
@@ -59,6 +63,7 @@ class StoryManager:
         )
 
     def process_command(self, command: str) -> str:
+        """Interpret and execute a player command."""
         command = command.lower().strip()
 
         # Handle movement
