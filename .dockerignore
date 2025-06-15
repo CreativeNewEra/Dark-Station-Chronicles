@@ -1,5 +1,5 @@
 .git
-**/node_modules
+**/node_modules/
 venv
 tests
 **/__pycache__/
