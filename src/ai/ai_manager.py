@@ -2,7 +2,10 @@ from typing import Optional, Dict, Any, Literal, List
 from abc import ABC, abstractmethod
 import logging
 import anthropic
-from llama_cpp import Llama
+try:
+    from llama_cpp import Llama
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    Llama = None
 import os
 from dotenv import load_dotenv
 from datetime import datetime
@@ -63,7 +66,10 @@ class LlamaBackend(AIModelBackend):
 
     def __init__(self):
         model_path = os.getenv("LLAMA_MODEL_PATH")
-        if model_path and os.path.exists(model_path):
+        if Llama is None:
+            self.model = None
+            logger.warning("llama_cpp package not available; Llama backend disabled")
+        elif model_path and os.path.exists(model_path):
             try:
                 self.model = Llama(
                     model_path=model_path,
