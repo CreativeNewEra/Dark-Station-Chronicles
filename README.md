@@ -86,6 +86,7 @@ Copy `.env.template` to `.env` and add your settings:
 ```
 ANTHROPIC_API_KEY=your_api_key_here
 LLAMA_MODEL_PATH=/path/to/your/model.gguf  # Optional
+CORS_ORIGINS=http://localhost:5173  # Allowed origins for CORS
 ```
 
 ### Model Setup
