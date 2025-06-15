@@ -33,7 +33,7 @@ def detect_package_manager():
 
 def is_node_installed():
     """Check if Node.js and npm are installed."""
-    return shutil.which('node') and shutil.which('npm')
+    return bool(shutil.which('node') and shutil.which('npm'))
 
 def main():
     # Get the project root directory
