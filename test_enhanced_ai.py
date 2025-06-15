@@ -55,3 +55,17 @@ def test_fallback_to_llama(mocked_manager):
     response = manager.get_ai_response("hello")
     assert response == "llama"
     llama_model.assert_called()
+
+
+def test_switch_backend_invalid_name(mocked_manager):
+    manager, _, _ = mocked_manager
+    assert not manager.switch_backend("invalid")
+    assert manager.current_backend == "claude"
+
+
+def test_switch_backend_unavailable(mocked_manager):
+    manager, _, _ = mocked_manager
+    # Make llama unavailable
+    manager.backends["llama"].model = None
+    assert not manager.switch_backend("llama")
+    assert manager.current_backend == "claude"
