@@ -3,6 +3,7 @@ import os
 import sys
 import venv
 import subprocess
+import shutil
 from pathlib import Path
 
 def print_step(message):
@@ -19,11 +20,20 @@ def run_command(command, check=True):
         print(f"Error details: {e}")
         return False
 
-def check_dnf_package(package):
-    """Check if a package is installed via DNF."""
-    result = subprocess.run(['dnf', 'list', 'installed', package],
-                          capture_output=True, text=True)
-    return package in result.stdout
+def detect_package_manager():
+    """Detect available system package manager."""
+    if shutil.which('dnf'):
+        return 'dnf'
+    if shutil.which('apt'):
+        return 'apt'
+    if shutil.which('brew'):
+        return 'brew'
+    return None
+
+
+def is_node_installed():
+    """Check if Node.js and npm are installed."""
+    return shutil.which('node') and shutil.which('npm')
 
 def main():
     # Get the project root directory
@@ -35,11 +45,18 @@ def main():
     print_step("Checking system requirements...")
 
     # Check for Node.js and npm
-    if not check_dnf_package('nodejs'):
-        print("Installing Node.js and npm...")
-        if not run_command('sudo dnf install -y nodejs npm'):
-            print("Failed to install Node.js and npm")
-            sys.exit(1)
+    if not is_node_installed():
+        pm = detect_package_manager()
+        print("Node.js and npm are required but were not found.")
+        if pm == 'dnf':
+            print("Install them with: sudo dnf install -y nodejs npm")
+        elif pm == 'apt':
+            print("Install them with: sudo apt update && sudo apt install -y nodejs npm")
+        elif pm == 'brew':
+            print("Install them with: brew install node")
+        else:
+            print("Please install Node.js and npm using your system's package manager.")
+        sys.exit(1)
 
     # Create directory structure
     print_step("Creating directory structure...")
