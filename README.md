@@ -100,6 +100,13 @@ This will:
 - Open the game in your browser
 - Manage logs and cleanup
 
+Alternatively, to run only the backend during development, execute:
+
+```bash
+python -m uvicorn src.api.main:app --reload
+```
+Run this from the project root so package imports resolve correctly.
+
 2. Access the game at: http://localhost:5173
 
 ## Development
