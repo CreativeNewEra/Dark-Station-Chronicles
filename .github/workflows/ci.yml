@@ -20,9 +20,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest
+          pip install black flake8
 
       - name: Run pytest
         run: pytest -vv
+
+      - name: Run Black
+        run: black --check .
+
+      - name: Run Flake8
+        run: flake8
 
       - name: Set up Node
         uses: actions/setup-node@v4
