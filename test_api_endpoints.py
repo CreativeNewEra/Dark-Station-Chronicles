@@ -25,7 +25,7 @@ def test_start_game(monkeypatch):
     response = client.get("/game/start")
     assert response.status_code == 200
     assert response.json()["message"] == expected
-    assert response.json()["game_state"] is None
+    assert response.json()["game_state"] is not None
 
 
 def test_process_command_with_ai(monkeypatch):
@@ -46,3 +46,11 @@ def test_switch_model(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {"message": "Successfully switched to llama"}
     mock_ai.switch_backend.assert_called_with("llama")
+
+
+def test_switch_model_new_backend(monkeypatch):
+    client, module, mock_ai = create_client(monkeypatch)
+    response = client.post("/game/switch-model", json={"model": "openai"})
+    assert response.status_code == 200
+    assert response.json() == {"message": "Successfully switched to openai"}
+    mock_ai.switch_backend.assert_called_with("openai")

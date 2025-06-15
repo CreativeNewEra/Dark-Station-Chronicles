@@ -20,13 +20,25 @@ load_dotenv()
 # --- Model classes ---
 
 class SwitchModelRequest(BaseModel):
-    model: Literal["claude", "llama"]
+    model: Literal[
+        "claude",
+        "llama",
+        "openai",
+        "gemini",
+        "openrouter",
+    ]
 
 
 class GameCommand(BaseModel):
     command: str
     use_ai: bool = False
-    model: Literal["claude", "llama"] = "claude"
+    model: Literal[
+        "claude",
+        "llama",
+        "openai",
+        "gemini",
+        "openrouter",
+    ] = "claude"
 
 
 class GameState(BaseModel):
