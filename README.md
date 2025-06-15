@@ -55,7 +55,7 @@ Game/
 ├── models/                   # Local AI models directory
 ├── setup.py                  # Project setup script
 ├── start-game.sh            # Launch script
-└── .env                     # Environment variables
+└── .env.template           # Example environment file
 ```
 
 ## Setup and Requirements
@@ -71,7 +71,7 @@ This will:
 - Configure the frontend
 
 ### Environment Configuration
-Create a `.env` file with:
+Copy `.env.template` to `.env` and add your settings:
 ```
 ANTHROPIC_API_KEY=your_api_key_here
 LLAMA_MODEL_PATH=/path/to/your/model.gguf  # Optional
@@ -81,12 +81,12 @@ LLAMA_MODEL_PATH=/path/to/your/model.gguf  # Optional
 
 1. **Claude Setup**
    - Obtain API key from Anthropic
-   - Add it to the `.env` file
+   - Add it to your `.env` file
 
 2. **Llama Setup (Optional)**
    - Download a GGUF model file
    - Place it in the `models/` directory
-   - Update `LLAMA_MODEL_PATH` in `.env`
+   - Update `LLAMA_MODEL_PATH` in your `.env` file
 
 ## Running the Game
 
