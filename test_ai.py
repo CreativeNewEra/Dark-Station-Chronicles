@@ -1,68 +1,45 @@
 import os
-from dotenv import load_dotenv
-import anthropic
-from llama_cpp import Llama
+from unittest.mock import MagicMock, patch
 
-def test_claude():
-    """Test Claude API connection"""
-    print("\nTesting Claude connection...")
-    try:
-        client = anthropic.Client(api_key=os.getenv("ANTHROPIC_API_KEY"))
-        response = client.messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=1024,
-            messages=[{
-                "role": "user",
-                "content": "Say 'Claude connection successful!'"
-            }]
-        )
-        print("✓ Claude test successful!")
-        print(f"Response: {response.content[0].text}")
-        return True
-    except Exception as e:
-        print("✗ Claude test failed!")
-        print(f"Error: {str(e)}")
-        return False
+import pytest
 
-def test_llama():
-    """Test Llama.cpp installation"""
-    print("\nTesting Llama.cpp installation...")
-    try:
-        # Just test if we can import and initialize Llama
-        print("✓ Llama.cpp import successful!")
+from src.ai.ai_manager import ClaudeBackend, LlamaBackend
 
-        # Check if model path is set
-        model_path = os.getenv("LLAMA_MODEL_PATH")
-        if not model_path:
-            print("✗ LLAMA_MODEL_PATH not set in .env!")
-            return False
 
-        if not os.path.exists(model_path):
-            print(f"✗ Model file not found at: {model_path}")
-            return False
+@pytest.fixture
+def mock_anthropic():
+    """Mock anthropic.Client used by ClaudeBackend."""
+    fake_client = MagicMock()
+    fake_client.messages.create.return_value = MagicMock(
+        content=[MagicMock(text="mocked claude response")]
+    )
+    with patch("src.ai.ai_manager.anthropic.Client", return_value=fake_client):
+        yield fake_client
 
-        print(f"✓ Found model file at: {model_path}")
-        return True
-    except Exception as e:
-        print("✗ Llama.cpp test failed!")
-        print(f"Error: {str(e)}")
-        return False
 
-def main():
-    print("=== AI Backend Test Script ===")
+def test_claude_backend_generate_response(monkeypatch, mock_anthropic):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy")
+    backend = ClaudeBackend()
+    assert backend.is_available()
+    response = backend.generate_response("Hello")
+    assert response == "mocked claude response"
+    mock_anthropic.messages.create.assert_called_once()
 
-    # Load environment variables
-    print("\nLoading environment variables...")
-    load_dotenv()
 
-    # Run tests
-    claude_ok = test_claude()
-    llama_ok = test_llama()
+@pytest.fixture
+def mock_llama(monkeypatch):
+    monkeypatch.setenv("LLAMA_MODEL_PATH", "/fake/model.bin")
+    fake_model = MagicMock()
+    fake_model.return_value = {"choices": [{"text": "mocked llama"}]}
+    with patch("src.ai.ai_manager.os.path.exists", return_value=True), patch(
+        "src.ai.ai_manager.Llama", return_value=fake_model
+    ):
+        yield fake_model
 
-    # Summary
-    print("\n=== Test Summary ===")
-    print(f"Claude API: {'✓' if claude_ok else '✗'}")
-    print(f"Llama.cpp: {'✓' if llama_ok else '✗'}")
 
-if __name__ == "__main__":
-    main()
+def test_llama_backend_generate_response(mock_llama):
+    backend = LlamaBackend()
+    assert backend.is_available()
+    response = backend.generate_response("Hi")
+    assert response == "mocked llama"
+    mock_llama.assert_called_once()
