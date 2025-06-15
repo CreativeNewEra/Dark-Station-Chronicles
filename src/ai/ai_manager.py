@@ -159,7 +159,10 @@ class AIManager:
             logger.info(f"Switched AI backend to {name}")
             return True
 
-        logger.warning(f"Requested backend '{name}' is not available")
+        if not backend:
+            logger.warning(f"Requested backend '{name}' does not exist in the available backends")
+        elif not backend.is_available():
+            logger.warning(f"Requested backend '{name}' exists but is not available")
         return False
 
     def _construct_prompt(
