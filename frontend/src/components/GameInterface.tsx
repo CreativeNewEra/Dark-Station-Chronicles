@@ -10,7 +10,7 @@ const GameInterface: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
     const [gameState, setGameState] = useState<GameState | null>(null);
-    const [currentModel, setCurrentModel] = useState<'claude' | 'llama'>('claude');
+    const [currentModel, setCurrentModel] = useState<'claude' | 'llama' | 'openai' | 'gemini' | 'openrouter'>('claude');
     const [isModelSwitching, setIsModelSwitching] = useState(false);
     const [isThinking, setIsThinking] = useState(false);
     const [showLoadGameModal, setShowLoadGameModal] = useState(false);
@@ -40,7 +40,7 @@ const GameInterface: React.FC = () => {
         }
     };
 
-    const switchModel = async (newModel: 'claude' | 'llama') => {
+    const switchModel = async (newModel: 'claude' | 'llama' | 'openai' | 'gemini' | 'openrouter') => {
         try {
             setIsModelSwitching(true);
             const response = await fetch(`${API_BASE_URL}/game/switch-model`, {

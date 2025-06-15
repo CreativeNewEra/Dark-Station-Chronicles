@@ -4,6 +4,16 @@ import logging
 import anthropic
 
 try:
+    import openai
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    openai = None
+
+try:
+    import google.generativeai as genai
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    genai = None
+
+try:
     from llama_cpp import Llama
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     Llama = None
@@ -103,12 +113,115 @@ class LlamaBackend(AIModelBackend):
         return self.model is not None
 
 
+class OpenAIBackend(AIModelBackend):
+    """OpenAI API backend"""
+
+    def __init__(self):
+        self.api_key = os.getenv("OPENAI_API_KEY")
+        if openai and self.api_key:
+            self.client = openai.OpenAI(api_key=self.api_key)
+            logger.info("Successfully initialized OpenAI backend")
+        else:
+            self.client = None
+            logger.warning("OpenAI package not available or API key missing")
+
+    def generate_response(self, prompt: str) -> str:
+        if not self.client:
+            raise RuntimeError("OpenAI backend not configured")
+
+        try:
+            response = self.client.chat.completions.create(
+                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=1024,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Error getting OpenAI response: {e}")
+            raise
+
+    def is_available(self) -> bool:
+        return self.client is not None
+
+
+class GeminiBackend(AIModelBackend):
+    """Google Gemini API backend"""
+
+    def __init__(self):
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        if genai and self.api_key:
+            genai.configure(api_key=self.api_key)
+            try:
+                self.model = genai.GenerativeModel("gemini-pro")
+                logger.info("Successfully initialized Gemini backend")
+            except Exception as e:
+                self.model = None
+                logger.error(f"Failed to initialize Gemini model: {e}")
+        else:
+            self.model = None
+            logger.warning("google-generativeai package not available or API key missing")
+
+    def generate_response(self, prompt: str) -> str:
+        if not self.model:
+            raise RuntimeError("Gemini backend not configured")
+
+        try:
+            response = self.model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            logger.error(f"Error getting Gemini response: {e}")
+            raise
+
+    def is_available(self) -> bool:
+        return self.model is not None
+
+
+class OpenRouterBackend(AIModelBackend):
+    """OpenRouter API backend (OpenAI-compatible)"""
+
+    def __init__(self):
+        self.api_key = os.getenv("OPENROUTER_API_KEY")
+        self.base_url = os.getenv("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1")
+        if openai and self.api_key:
+            self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
+            logger.info("Successfully initialized OpenRouter backend")
+        else:
+            self.client = None
+            logger.warning("OpenRouter API key missing or openai package not available")
+
+    def generate_response(self, prompt: str) -> str:
+        if not self.client:
+            raise RuntimeError("OpenRouter backend not configured")
+
+        try:
+            response = self.client.chat.completions.create(
+                model=os.getenv("OPENROUTER_MODEL", "openrouter/mistral-7b"),
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=1024,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Error getting OpenRouter response: {e}")
+            raise
+
+    def is_available(self) -> bool:
+        return self.client is not None
+
+
 class AIManager:
     def __init__(self):
         load_dotenv()
 
         # Initialize backends
-        self.backends = {"claude": ClaudeBackend(), "llama": LlamaBackend()}
+        self.backends = {
+            "claude": ClaudeBackend(),
+            "llama": LlamaBackend(),
+            "openai": OpenAIBackend(),
+            "gemini": GeminiBackend(),
+            "openrouter": OpenRouterBackend(),
+        }
 
         self._current_backend = os.getenv("DEFAULT_AI_BACKEND", "claude")
 

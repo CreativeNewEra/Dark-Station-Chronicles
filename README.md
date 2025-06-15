@@ -17,6 +17,9 @@ A text-based sci-fi RPG with AI-powered narrative responses and a modern, modula
 ### AI Integration
 - Cloud-based Claude AI support
 - Local Llama model support (optional)
+- OpenAI API support
+- Google Gemini API support
+- OpenRouter API support
 - Contextual responses based on:
   - Character class
   - Current location
@@ -86,6 +89,9 @@ Copy `.env.template` to `.env` and add your settings:
 ```
 ANTHROPIC_API_KEY=your_api_key_here
 LLAMA_MODEL_PATH=/path/to/your/model.gguf  # Optional
+OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
 CORS_ORIGINS=http://localhost:5173  # Allowed origins for CORS
 ```
 
@@ -99,6 +105,18 @@ CORS_ORIGINS=http://localhost:5173  # Allowed origins for CORS
    - Download a GGUF model file
    - Place it in the `models/` directory
    - Update `LLAMA_MODEL_PATH` in your `.env` file
+
+3. **OpenAI Setup**
+   - Obtain API key from OpenAI
+   - Add `OPENAI_API_KEY` to your `.env` file
+
+4. **Gemini Setup**
+   - Obtain API key for Google Gemini
+   - Add `GEMINI_API_KEY` to your `.env` file
+
+5. **OpenRouter Setup**
+   - Obtain API key from OpenRouter
+   - Add `OPENROUTER_API_KEY` to your `.env` file
 
 ## Running the Game
 
