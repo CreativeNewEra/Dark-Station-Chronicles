@@ -60,6 +60,17 @@ Game/
 
 ## Setup and Requirements
 
+### Prerequisites
+Ensure you have Python 3.11+ and Node.js with npm installed. The exact commands
+depend on your operating system:
+
+- **Fedora (dnf)**: `sudo dnf install nodejs npm`
+- **Debian/Ubuntu (apt)**: `sudo apt update && sudo apt install nodejs npm`
+- **macOS (Homebrew)**: `brew install node`
+
+If your system uses another package manager, install Node.js and npm manually.
+The setup script will exit if they are missing.
+
 ### Initial Setup
 ```bash
 python setup.py
@@ -67,7 +78,7 @@ python setup.py
 This will:
 - Create directory structure
 - Set up a virtual environment
-- Install dependencies
+- Install Python dependencies
 - Configure the frontend
 
 ### Environment Configuration
