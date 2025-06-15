@@ -120,6 +120,20 @@ Run this from the project root so package imports resolve correctly.
 
 2. Access the game at: http://localhost:5173
 
+## Docker Usage
+
+You can also run the project using Docker. Build the containers and start both
+services with `docker compose`:
+
+```bash
+docker compose build
+docker compose up
+```
+
+The backend API will be available on `http://localhost:8000` and the frontend on
+`http://localhost:5173`. Ensure you have a `.env` file in the project root so
+the backend container can read your API keys.
+
 ## Development
 
 ### Pre-commit Hooks
