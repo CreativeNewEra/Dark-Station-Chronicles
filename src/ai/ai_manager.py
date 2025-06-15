@@ -147,7 +147,11 @@ class AIManager:
             ``False`` otherwise.
         """
         if name == self._current_backend:
-            return True
+            current_backend = self.backends.get(self._current_backend)
+            if current_backend and current_backend.is_available():
+                return True
+            logger.warning(f"Current backend '{self._current_backend}' is not available")
+            return False
 
         backend = self.backends.get(name)
         if backend and backend.is_available():
