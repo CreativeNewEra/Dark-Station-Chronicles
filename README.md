@@ -122,6 +122,17 @@ Run this from the project root so package imports resolve correctly.
 
 ## Development
 
+### Pre-commit Hooks
+
+Set up Git hooks to automatically lint and format your code:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+This config runs `black`, `flake8`, and `eslint` on each commit.
+
 ### Key Components
 
 1. **AI Manager** (`src/ai/ai_manager.py`)
