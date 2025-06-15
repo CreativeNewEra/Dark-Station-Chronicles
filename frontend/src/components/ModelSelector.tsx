@@ -1,5 +1,5 @@
 import React from 'react';
-import { ModelSelectorProps } from './types';
+import { ModelSelectorProps } from '../types';
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ currentModel, isSwitching, onSwitch }) => (
     <div className="bg-gray-700 p-3 rounded mb-4">

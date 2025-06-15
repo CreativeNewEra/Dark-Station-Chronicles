@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart, Battery, Brain } from 'lucide-react';
-import { StatsPanelProps } from './types';
+import { StatsPanelProps } from '../types';
 
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => (
     <div className="space-y-4">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import StatsPanel from './StatsPanel';
 import ModelSelector from './ModelSelector';
 import MessageList from './MessageList';
-import { GameState, Message } from './types';
+import { GameState, Message } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
