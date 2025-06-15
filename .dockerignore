@@ -1,7 +1,7 @@
 .git
 **/node_modules/
 venv
-tests
+tests/
 **/__pycache__/
 *.pyc
 *.pyo
