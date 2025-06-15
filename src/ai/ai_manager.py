@@ -126,6 +126,26 @@ class AIManager:
         """Get the name of the current backend"""
         return self._current_backend
 
+    def switch_backend(self, backend: Literal["claude", "llama"]) -> bool:
+        """Switch the active backend.
+
+        Parameters
+        ----------
+        backend: Literal["claude", "llama"]
+            Name of the backend to activate.
+
+        Returns
+        -------
+        bool
+            ``True`` if the backend exists and was activated, ``False`` otherwise.
+        """
+        if backend == self._current_backend:
+            return True
+        if backend in self.backends:
+            self._current_backend = backend
+            return True
+        return False
+
     def _construct_prompt(
         self, user_input: str, game_state: Optional[Dict[str, Any]] = None
     ) -> str:

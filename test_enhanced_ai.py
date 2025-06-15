@@ -1,105 +1,57 @@
-import os
-from dotenv import load_dotenv
-from src.ai.ai_manager import EnhancedAIManager
+from unittest.mock import MagicMock, patch
 
-def test_backend_switching():
-    """Test switching between AI backends"""
-    print("\nTesting backend switching...")
-    try:
-        ai_manager = EnhancedAIManager()
+import pytest
 
-        # Test Claude backend
-        print("\nTesting Claude backend:")
-        if ai_manager.switch_backend("claude"):
-            print("✓ Successfully switched to Claude")
-            response = ai_manager.get_ai_response("What is your name?")
-            print(f"Claude response: {response}")
-        else:
-            print("✗ Failed to switch to Claude backend")
+from src.ai.ai_manager import AIManager
 
-        # Test Llama backend
-        print("\nTesting Llama backend:")
-        if ai_manager.switch_backend("llama"):
-            print("✓ Successfully switched to Llama")
-            response = ai_manager.get_ai_response("What is your name?")
-            print(f"Llama response: {response}")
-        else:
-            print("✗ Failed to switch to Llama backend")
 
-        return True
-    except Exception as e:
-        print(f"✗ Backend switching test failed: {str(e)}")
-        return False
+@pytest.fixture
+def mocked_manager(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "key")
+    monkeypatch.setenv("LLAMA_MODEL_PATH", "/fake/model.bin")
+    claude_client = MagicMock()
+    claude_client.messages.create.return_value = MagicMock(
+        content=[MagicMock(text="claude")]
+    )
+    llama_model = MagicMock()
+    llama_model.return_value = {"choices": [{"text": "llama"}]}
+    with patch("src.ai.ai_manager.anthropic.Client", return_value=claude_client), patch(
+        "src.ai.ai_manager.os.path.exists", return_value=True
+    ), patch("src.ai.ai_manager.Llama", return_value=llama_model):
+        manager = AIManager()
+        yield manager, claude_client, llama_model
 
-def test_game_responses():
-    """Test game-specific responses"""
-    print("\nTesting game-specific responses...")
-    try:
-        ai_manager = EnhancedAIManager()
 
-        # Sample game state
-        game_state = {
-            "current_room": "cargo_hold",
-            "player_stats": {
-                "health": 100,
-                "energy": 90,
-                "level": 1
-            },
-            "inventory": ["medkit", "energy_cell"]
-        }
+def test_backend_switching(mocked_manager):
+    manager, claude_client, llama_model = mocked_manager
+    assert manager.current_backend == "claude"
+    assert manager.switch_backend("llama")
+    assert manager.current_backend == "llama"
+    assert manager.switch_backend("claude")
+    assert manager.current_backend == "claude"
 
-        # Test with Claude
-        print("\nTesting game response with Claude:")
-        ai_manager.switch_backend("claude")
-        response = ai_manager.get_ai_response("look around", game_state)
-        print(f"Claude game response: {response}")
 
-        # Test with Llama
-        print("\nTesting game response with Llama:")
-        ai_manager.switch_backend("llama")
-        response = ai_manager.get_ai_response("look around", game_state)
-        print(f"Llama game response: {response}")
+def test_game_responses(mocked_manager):
+    manager, claude_client, llama_model = mocked_manager
+    game_state = {
+        "current_room": "bridge",
+        "player_stats": {"health": 100},
+        "inventory": [],
+    }
+    manager.switch_backend("claude")
+    assert manager.get_ai_response("look", game_state) == "claude"
+    claude_client.messages.create.assert_called()
 
-        return True
-    except Exception as e:
-        print(f"✗ Game response test failed: {str(e)}")
-        return False
+    manager.switch_backend("llama")
+    assert manager.get_ai_response("look", game_state) == "llama"
+    llama_model.assert_called()
 
-def test_fallback():
-    """Test fallback mechanism"""
-    print("\nTesting fallback mechanism...")
-    try:
-        ai_manager = EnhancedAIManager()
 
-        # Temporarily invalidate Claude backend to test fallback
-        ai_manager.backends["claude"].api_key = "invalid_key"
-
-        print("Testing with invalid Claude key (should fallback to Llama):")
-        response = ai_manager.get_ai_response("Hello")
-        print(f"Fallback response: {response}")
-
-        return True
-    except Exception as e:
-        print(f"✗ Fallback test failed: {str(e)}")
-        return False
-
-def main():
-    print("=== Enhanced AI Backend Test Script ===")
-
-    # Load environment variables
-    print("\nLoading environment variables...")
-    load_dotenv()
-
-    # Run tests
-    backend_switch_ok = test_backend_switching()
-    game_responses_ok = test_game_responses()
-    fallback_ok = test_fallback()
-
-    # Summary
-    print("\n=== Test Summary ===")
-    print(f"Backend Switching: {'✓' if backend_switch_ok else '✗'}")
-    print(f"Game Responses: {'✓' if game_responses_ok else '✗'}")
-    print(f"Fallback Mechanism: {'✓' if fallback_ok else '✗'}")
-
-if __name__ == "__main__":
-    main()
+def test_fallback_to_llama(mocked_manager):
+    manager, claude_client, llama_model = mocked_manager
+    manager.switch_backend("claude")
+    # Invalidate claude by removing client
+    manager.backends["claude"].client = None
+    response = manager.get_ai_response("hello")
+    assert response == "llama"
+    llama_model.assert_called()
