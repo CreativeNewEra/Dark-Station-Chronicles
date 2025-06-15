@@ -1,4 +1,6 @@
 import logging
+import os
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +10,9 @@ from typing import Optional, Dict, List, Literal
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Load environment variables from .env if available
+load_dotenv()
 
 
 # Model classes
@@ -45,9 +50,14 @@ except Exception as e:
 app = FastAPI(title="Dark Station Chronicles API")
 
 # Configure CORS
+# Allow origins can be provided as a comma-separated list via CORS_ORIGINS
+# environment variable. Defaults to localhost dev server.
+origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+allow_origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
