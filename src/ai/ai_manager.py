@@ -139,6 +139,8 @@ class AIManager:
         bool
             ``True`` if the backend exists and was activated, ``False`` otherwise.
         """
+        if backend == self._current_backend:
+            return True
         if backend in self.backends:
             self._current_backend = backend
             return True
