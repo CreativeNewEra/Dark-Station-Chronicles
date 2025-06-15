@@ -1,0 +1,9 @@
+.git
+**/node_modules/
+venv
+tests/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+test_*.py
