@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { MessageListProps } from './types';
+import { MessageListProps } from '../types';
 
 const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
     ({ messages }, ref) => (
