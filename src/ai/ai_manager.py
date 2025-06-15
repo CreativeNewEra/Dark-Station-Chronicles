@@ -1,7 +1,8 @@
-from typing import Optional, Dict, Any, Literal, List
+from typing import Optional, Dict, Any
 from abc import ABC, abstractmethod
 import logging
 import anthropic
+
 try:
     from llama_cpp import Llama
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
@@ -150,7 +151,9 @@ class AIManager:
             current_backend = self.backends.get(self._current_backend)
             if current_backend and current_backend.is_available():
                 return True
-            logger.warning(f"Current backend '{self._current_backend}' is not available")
+            logger.warning(
+                f"Current backend '{self._current_backend}' is not available"
+            )
             return False
 
         backend = self.backends.get(name)
@@ -160,7 +163,9 @@ class AIManager:
             return True
 
         if not backend:
-            logger.warning(f"Requested backend '{name}' does not exist in the available backends")
+            logger.warning(
+                f"Requested backend '{name}' does not exist in the available backends"
+            )
         elif not backend.is_available():
             logger.warning(f"Requested backend '{name}' exists but is not available")
         return False

@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
+
 @dataclass
 class Player:
     health: int = 100
@@ -10,10 +11,12 @@ class Player:
     inventory: List[str] = field(default_factory=list)
     character_class: Optional[str] = None
 
+
 @dataclass
 class Room:
     description: str
     exits: Dict[str, str]  # direction -> room_id mapping
+
 
 class StoryManager:
     """Handle player state and command processing for the text adventure."""
@@ -27,24 +30,24 @@ class StoryManager:
         self.rooms = {
             "start": Room(
                 description="You find yourself in the dimly lit reception area of Dark Station. "
-                          "Emergency lights cast an eerie red glow across abandoned terminals.",
-                exits={"north": "corridor", "east": "security"}
+                "Emergency lights cast an eerie red glow across abandoned terminals.",
+                exits={"north": "corridor", "east": "security"},
             ),
             "corridor": Room(
                 description="A long corridor stretches before you. Loose cables hang from the ceiling, "
-                          "occasionally sparking with residual power.",
-                exits={"south": "start", "north": "lab"}
+                "occasionally sparking with residual power.",
+                exits={"south": "start", "north": "lab"},
             ),
             "security": Room(
                 description="The security office is a mess of broken monitors and scattered datapads. "
-                          "A powered-down security robot sits motionless in the corner.",
-                exits={"west": "start"}
+                "A powered-down security robot sits motionless in the corner.",
+                exits={"west": "start"},
             ),
             "lab": Room(
                 description="This appears to be a research laboratory. Strange equipment lines the walls, "
-                          "and holographic displays flicker with corrupted data.",
-                exits={"south": "corridor"}
-            )
+                "and holographic displays flicker with corrupted data.",
+                exits={"south": "corridor"},
+            ),
         }
 
     def get_opening_text(self) -> str:
@@ -89,7 +92,9 @@ class StoryManager:
         current_room = self.rooms[self.current_room]
         if direction in current_room.exits:
             self.current_room = current_room.exits[direction]
-            return f"You move {direction}.\n\n{self.rooms[self.current_room].description}"
+            return (
+                f"You move {direction}.\n\n{self.rooms[self.current_room].description}"
+            )
         return f"You cannot go {direction} from here."
 
     def _handle_examine(self, command: str) -> str:
