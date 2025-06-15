@@ -1,16 +1,13 @@
 import importlib
-import os
-import sys
 from unittest.mock import MagicMock
-
-import pytest
 from fastapi.testclient import TestClient
 
 
+import src.api.main as main
+
+
 def create_client(monkeypatch):
-    sys.path.insert(0, os.path.abspath("src"))
-    module = importlib.import_module("src.api.main")
-    importlib.reload(module)
+    module = importlib.reload(main)
 
     mock_ai = MagicMock()
     mock_ai.current_backend = "claude"

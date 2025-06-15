@@ -1,26 +1,25 @@
-import sys
-import os
 import logging
-from pathlib import Path
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, List, Literal
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 # Model classes
 class SwitchModelRequest(BaseModel):
     model: Literal["claude", "llama"]
+
 
 class GameCommand(BaseModel):
     command: str
     use_ai: bool = False
     model: Literal["claude", "llama"] = "claude"
+
 
 class GameState(BaseModel):
     current_room: str
@@ -28,14 +27,16 @@ class GameState(BaseModel):
     inventory: List[str]
     available_exits: List[str]
 
+
 class GameResponse(BaseModel):
     message: str
     game_state: Optional[GameState] = None
 
+
 # Import managers
 try:
-    from game_logic.story_manager import StoryManager
-    from ai.ai_manager import AIManager
+    from src.game_logic.story_manager import StoryManager
+    from src.ai.ai_manager import AIManager
 except Exception as e:
     logger.error(f"Error importing managers: {e}")
     raise
@@ -60,6 +61,7 @@ except Exception as e:
     logger.error(f"Error initializing managers: {e}")
     raise
 
+
 def get_game_state() -> Optional[GameState]:
     """Helper function to get current game state"""
     try:
@@ -72,19 +74,21 @@ def get_game_state() -> Optional[GameState]:
             player_stats={
                 "health": story_manager.player.health,
                 "energy": story_manager.player.energy,
-                "level": story_manager.player.level
+                "level": story_manager.player.level,
             },
             inventory=story_manager.player.inventory,
-            available_exits=list(current_room.exits.keys())
+            available_exits=list(current_room.exits.keys()),
         )
     except Exception as e:
         logger.error(f"Error getting game state: {e}")
         return None
 
+
 @app.get("/")
 async def read_root():
     """Health check endpoint"""
     return {"status": "online", "game": "Dark Station Chronicles"}
+
 
 @app.post("/game/command")
 async def process_command(command: GameCommand) -> GameResponse:
@@ -115,15 +119,13 @@ async def process_command(command: GameCommand) -> GameResponse:
                 logger.error(f"AI enhancement failed: {ai_error}")
                 # Continue with base response if AI fails
 
-        return GameResponse(
-            message=response,
-            game_state=get_game_state()
-        )
+        return GameResponse(message=response, game_state=get_game_state())
 
     except Exception as e:
         logger.error(f"Error processing command: {e}")
         logger.exception("Full traceback:")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/game/start")
 async def start_game():
@@ -135,17 +137,21 @@ async def start_game():
         logger.error(f"Error starting game: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/game/switch-model")
 async def switch_model(request: SwitchModelRequest):
     """Switch between AI models"""
     try:
         success = ai_manager.switch_backend(request.model)
         if not success:
-            raise HTTPException(status_code=500, detail=f"Failed to switch to {request.model}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to switch to {request.model}"
+            )
         return {"message": f"Successfully switched to {request.model}"}
     except Exception as e:
         logger.error(f"Error switching model: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/game/state")
 async def get_current_state():
@@ -159,6 +165,8 @@ async def get_current_state():
         logger.error(f"Error getting game state: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
