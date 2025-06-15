@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class Player:
@@ -7,12 +7,8 @@ class Player:
     energy: int = 100
     level: int = 1
     exp: int = 0
-    inventory: List[str] = None
+    inventory: List[str] = field(default_factory=list)
     character_class: Optional[str] = None
-
-    def __post_init__(self):
-        if self.inventory is None:
-            self.inventory = []
 
 @dataclass
 class Room:
