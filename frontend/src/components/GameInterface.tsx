@@ -4,6 +4,8 @@ import ModelSelector from './ModelSelector';
 import MessageList from './MessageList';
 import { GameState, Message } from './types';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 const GameInterface: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
@@ -27,7 +29,7 @@ const GameInterface: React.FC = () => {
 
     const startGame = async () => {
         try {
-            const response = await fetch('http://localhost:8000/game/start');
+            const response = await fetch(`${API_BASE_URL}/game/start`);
             const data = await response.json();
             addMessage('system', data.message);
         } catch (error) {
@@ -39,7 +41,7 @@ const GameInterface: React.FC = () => {
     const switchModel = async (newModel: 'claude' | 'llama') => {
         try {
             setIsModelSwitching(true);
-            const response = await fetch('http://localhost:8000/game/switch-model', {
+            const response = await fetch(`${API_BASE_URL}/game/switch-model`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model: newModel }),
@@ -70,7 +72,7 @@ const GameInterface: React.FC = () => {
         setIsThinking(true);
 
         try {
-            const response = await fetch('http://localhost:8000/game/command', {
+            const response = await fetch(`${API_BASE_URL}/game/command`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
