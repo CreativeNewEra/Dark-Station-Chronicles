@@ -104,8 +104,12 @@ async def process_command(command: GameCommand) -> GameResponse:
                 game_state = get_game_state()
                 state_dict = game_state.dict() if game_state else {}
 
-                if command.model != ai_manager._current_backend:
-                    ai_manager.switch_backend(command.model)
+                if command.model != ai_manager.current_backend:
+                    if not ai_manager.switch_backend(command.model):
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"Model {command.model} unavailable",
+                        )
 
                 ai_response = ai_manager.get_ai_response(command.command, state_dict)
                 response = f"{response}\n\n{ai_response}"
