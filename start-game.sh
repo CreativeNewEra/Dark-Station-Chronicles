@@ -97,7 +97,16 @@ start_servers() {
 
 open_game() {
     echo -e "${GREEN}Opening game in browser...${NC}"
-    xdg-open http://localhost:5173
+    case "$(uname | tr '[:upper:]' '[:lower:]')" in
+        darwin*)
+            open http://localhost:5173 ;;
+        linux*)
+            xdg-open http://localhost:5173 ;;
+        msys*|mingw*|cygwin*|windows*)
+            start http://localhost:5173 ;;
+        *)
+            echo -e "${YELLOW}Could not detect OS, please open http://localhost:5173 manually${NC}" ;;
+    esac
 }
 
 show_status() {
