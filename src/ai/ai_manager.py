@@ -230,8 +230,7 @@ class AIManager:
             self._current_backend = env_backend
         else:
             backend = self.backends.get(env_backend)
-            available = backend.is_available() if backend else False
-            invalid_default = env_backend not in self.backends or not available
+            invalid_default = env_backend not in self.backends or not (backend.is_available() if backend else False)
             if invalid_default:
                 logger.warning(
                     f"Invalid DEFAULT_AI_BACKEND '{env_backend}' - falling back to 'claude'"
