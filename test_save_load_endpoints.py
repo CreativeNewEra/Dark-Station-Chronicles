@@ -2,7 +2,6 @@ import importlib
 import os
 from unittest.mock import MagicMock
 
-import pytest
 from fastapi.testclient import TestClient
 
 from src.game_logic import story_manager as sm
@@ -23,6 +22,7 @@ def create_client(monkeypatch, tmp_path):
     monkeypatch.setitem(
         module.app.dependency_overrides, module.get_ai_manager, lambda: mock_ai
     )
+
     def override_story_manager() -> main.StoryManager:
         return story
 
@@ -76,4 +76,3 @@ def test_list_saves_handles_getmtime_error(monkeypatch, tmp_path):
     response = client.get("/game/saves")
     assert response.status_code == 200
     assert {"filename": "bad.json", "timestamp": "Unknown"} in response.json()
-
