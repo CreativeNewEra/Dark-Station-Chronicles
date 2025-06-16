@@ -109,7 +109,7 @@ def get_story_manager(request: Request, response: Response) -> StoryManager:
         story_manager = StoryManager()
         session_id = str(uuid.uuid4())
         sessions[session_id] = story_manager
-        response.set_cookie("session-id", session_id, httponly=True)
+        response.set_cookie("session-id", session_id, httponly=True, secure=True, samesite="Lax")
         return story_manager
     except Exception as e:
         logger.error(f"Error creating StoryManager: {e}")
