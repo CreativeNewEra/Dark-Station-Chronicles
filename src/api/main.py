@@ -113,8 +113,9 @@ def get_story_manager(request: Request, response: Response) -> StoryManager:
         story_manager = StoryManager()
         session_id = str(uuid.uuid4())
         sessions[session_id] = story_manager
+        cookie_secure = os.getenv("COOKIE_SECURE", "True").lower() == "true"
         response.set_cookie(
-            "session-id", session_id, httponly=True, secure=False, samesite="Lax"
+            "session-id", session_id, httponly=True, secure=cookie_secure, samesite="Lax"
         )
         return story_manager
     except Exception as e:
