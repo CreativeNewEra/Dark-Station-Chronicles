@@ -225,7 +225,25 @@ class AIManager:
             "openrouter": OpenRouterBackend(),
         }
 
-        self._current_backend = os.getenv("DEFAULT_AI_BACKEND", "claude")
+        env_backend = os.getenv("DEFAULT_AI_BACKEND", "claude")
+        if env_backend in self.backends and self.backends[env_backend].is_available():
+            self._current_backend = env_backend
+        else:
+            backend = self.backends.get(env_backend)
+            invalid_default = env_backend not in self.backends or not (backend.is_available() if backend else False)
+            if invalid_default:
+                logger.warning(
+                    f"Invalid DEFAULT_AI_BACKEND '{env_backend}' - attempting to find an available backend"
+                )
+                for name, backend in self.backends.items():
+                    if backend.is_available():
+                        self._current_backend = name
+                        logger.info(f"Falling back to available backend: '{name}'")
+                        break
+                else:
+                    raise RuntimeError("No available AI backends found.")
+            else:
+                self._current_backend = env_backend
 
         # Conversation memory
         self.conversation_history = []
