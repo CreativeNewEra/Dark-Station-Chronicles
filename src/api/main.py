@@ -1,10 +1,11 @@
 import logging
 import os
 import datetime  # Added for timestamping save files
+import uuid
 from dotenv import load_dotenv
 from typing import Optional, Dict, List, Literal, Any  # Added Any
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -92,12 +93,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Simple in-memory session store with TTL
+sessions: Dict[str, Dict[str, Any]] = {}  # Stores {'manager': StoryManager, 'last_access': datetime}
+SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "3600"))  # Default TTL is 1 hour
+
 
 # Dependency providers
-def get_story_manager() -> StoryManager:
-    """Create a new StoryManager for each request."""
+def get_story_manager(request: Request, response: Response) -> StoryManager:
+    """Retrieve or create a StoryManager tied to a session."""
     try:
-        return StoryManager()
+        session_id = request.cookies.get("session-id")
+        if session_id and session_id in sessions:
+            return sessions[session_id]
+
+        story_manager = StoryManager()
+        session_id = str(uuid.uuid4())
+        sessions[session_id] = story_manager
+        response.set_cookie("session-id", session_id, httponly=True, secure=True, samesite="Lax")
+        return story_manager
     except Exception as e:
         logger.error(f"Error creating StoryManager: {e}")
         raise

@@ -17,8 +17,15 @@ def create_client(monkeypatch):
     monkeypatch.setitem(
         module.app.dependency_overrides, module.get_ai_manager, lambda: mock_ai
     )
+    def override_story_manager(
+        request: main.Request, response: main.Response
+    ) -> main.StoryManager:
+        return story_manager
+
     monkeypatch.setitem(
-        module.app.dependency_overrides, module.get_story_manager, lambda: story_manager
+        module.app.dependency_overrides,
+        module.get_story_manager,
+        override_story_manager,
     )
 
     client = TestClient(module.app)

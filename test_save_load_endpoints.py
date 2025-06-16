@@ -20,8 +20,17 @@ def create_client(monkeypatch, tmp_path):
     mock_ai.switch_backend.return_value = True
 
     story = module.StoryManager()
-    monkeypatch.setitem(module.app.dependency_overrides, module.get_ai_manager, lambda: mock_ai)
-    monkeypatch.setitem(module.app.dependency_overrides, module.get_story_manager, lambda: story)
+    monkeypatch.setitem(
+        module.app.dependency_overrides, module.get_ai_manager, lambda: mock_ai
+    )
+    def override_story_manager() -> main.StoryManager:
+        return story
+
+    monkeypatch.setitem(
+        module.app.dependency_overrides,
+        module.get_story_manager,
+        override_story_manager,
+    )
 
     client = TestClient(module.app)
     return client, module, story
