@@ -97,12 +97,12 @@ start_servers() {
 
 open_game() {
     echo -e "${GREEN}Opening game in browser...${NC}"
-    case "$(uname | tr '[:upper:]' '[:lower:]')" in
-        darwin*)
+    case "$(uname -s)" in
+        Darwin*)
             open http://localhost:5173 ;;
-        linux*)
+        Linux*)
             xdg-open http://localhost:5173 ;;
-        msys*|mingw*|cygwin*|windows*)
+        MINGW*|MSYS*|CYGWIN*|Windows_NT*)
             start http://localhost:5173 ;;
         *)
             echo -e "${YELLOW}Could not detect OS, please open http://localhost:5173 manually${NC}" ;;
