@@ -19,6 +19,7 @@ load_dotenv()
 
 # --- Model classes ---
 
+
 class SwitchModelRequest(BaseModel):
     model: Literal[
         "claude",
@@ -105,12 +106,16 @@ def get_game_state_details() -> Optional[GameState]:
     """Helper function to get current game state details"""
     try:
         if not story_manager.player:
-            logger.warning("Attempted to get game state, but story_manager.player is not initialized.")
+            logger.warning(
+                "Attempted to get game state, but story_manager.player is not initialized."
+            )
             return None
 
         current_room_details = story_manager.rooms.get(story_manager.current_room)
         if not current_room_details:
-            logger.error(f"Current room '{story_manager.current_room}' not found in story_manager.rooms.")
+            logger.error(
+                f"Current room '{story_manager.current_room}' not found in story_manager.rooms."
+            )
             return None  # Or raise an error, or default to a start room state
 
         return GameState(
@@ -133,6 +138,7 @@ def get_game_state_details() -> Optional[GameState]:
 
 # --- API Endpoints ---
 
+
 @app.get("/")
 async def read_root():
     """Health check endpoint"""
@@ -143,7 +149,9 @@ async def read_root():
 async def process_command_endpoint(command: GameCommand):
     """Process a game command"""
     try:
-        logger.info(f"Processing command: {command.command} with AI: {command.use_ai}, Model: {command.model}")
+        logger.info(
+            f"Processing command: {command.command} with AI: {command.use_ai}, Model: {command.model}"
+        )
 
         response_text = story_manager.process_command(command.command)
         logger.info(f"Story manager response: {response_text}")
@@ -151,17 +159,25 @@ async def process_command_endpoint(command: GameCommand):
         if command.use_ai:
             try:
                 current_game_state = get_game_state_details()
-                state_dict_for_ai = current_game_state.dict() if current_game_state else {}
+                state_dict_for_ai = (
+                    current_game_state.dict() if current_game_state else {}
+                )
 
                 if command.model != ai_manager.current_backend:
                     if not ai_manager.switch_backend(command.model):
                         logger.error(f"Failed to switch AI model to {command.model}")
                         # Not raising HTTPException here to allow base game response
-                        response_text += f"\n\n(Note: Could not switch to AI model {command.model}.)"
+                        response_text += (
+                            f"\n\n(Note: Could not switch to AI model {command.model}.)"
+                        )
                     else:
-                        logger.info(f"Successfully switched AI model to {command.model}")
+                        logger.info(
+                            f"Successfully switched AI model to {command.model}"
+                        )
 
-                ai_response = ai_manager.get_ai_response(command.command, state_dict_for_ai)
+                ai_response = ai_manager.get_ai_response(
+                    command.command, state_dict_for_ai
+                )
                 response_text = f"{response_text}\n\n{ai_response}"
             except Exception as ai_error:
                 logger.error(f"AI enhancement failed: {ai_error}")
@@ -172,7 +188,9 @@ async def process_command_endpoint(command: GameCommand):
     except Exception as e:
         logger.error(f"Error processing command: {e}")
         logger.exception("Full traceback for process_command_endpoint:")
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}"
+        )
 
 
 @app.get("/game/start", response_model=GameResponse)
@@ -212,7 +230,9 @@ async def get_current_state_endpoint():
         if not state:
             # It's possible a game hasn't started or an error occurred.
             # Depending on desired behavior, could return 404 or an empty/default state.
-            logger.info("No active game session or error retrieving state for /game/state.")
+            logger.info(
+                "No active game session or error retrieving state for /game/state."
+            )
             # Return None or an empty GameState if that's more appropriate than 404
             # For now, let's allow None to be returned by the response_model
             return None
@@ -223,6 +243,7 @@ async def get_current_state_endpoint():
 
 
 # --- Save/Load Endpoints ---
+
 
 @app.post("/game/save", response_model=GameResponse)
 async def save_game_endpoint(request: SaveGameRequest):
@@ -261,7 +282,9 @@ async def load_game_endpoint(request: LoadGameRequest):
             # Distinguish between file not found and other errors
             if "not found" in message.lower():
                 raise HTTPException(status_code=404, detail=message)
-            raise HTTPException(status_code=400, detail=message)  # Bad request if file is corrupted etc.
+            raise HTTPException(
+                status_code=400, detail=message
+            )  # Bad request if file is corrupted etc.
         return GameResponse(message=message, game_state=get_game_state_details())
     except HTTPException:
         raise
@@ -285,8 +308,12 @@ async def list_save_files_endpoint():
                 try:
                     # Get last modified timestamp
                     timestamp_epoch = os.path.getmtime(file_path)
-                    timestamp_readable = datetime.datetime.fromtimestamp(timestamp_epoch).strftime('%Y-%m-%d %H:%M:%S')
-                    saves.append(SaveFile(filename=f_name, timestamp=timestamp_readable))
+                    timestamp_readable = datetime.datetime.fromtimestamp(
+                        timestamp_epoch
+                    ).strftime("%Y-%m-%d %H:%M:%S")
+                    saves.append(
+                        SaveFile(filename=f_name, timestamp=timestamp_readable)
+                    )
                 except Exception as e:
                     logger.error(f"Could not process save file {f_name}: {e}")
                     # Optionally skip this file or add with a default/error timestamp
@@ -302,6 +329,7 @@ async def list_save_files_endpoint():
 
 if __name__ == "__main__":
     import uvicorn
+
     # Ensure SAVE_DIR exists at startup when running directly
     if not os.path.exists(SAVE_DIR):
         try:

@@ -74,9 +74,9 @@ def mock_gemini(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "gem")
     fake_model = MagicMock()
     fake_model.generate_content.return_value = MagicMock(text="gemini")
-    with patch("src.ai.ai_manager.genai.GenerativeModel", return_value=fake_model), patch(
-        "src.ai.ai_manager.genai.configure"
-    ):
+    with patch(
+        "src.ai.ai_manager.genai.GenerativeModel", return_value=fake_model
+    ), patch("src.ai.ai_manager.genai.configure"):
         yield fake_model
 
 
