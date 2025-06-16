@@ -103,7 +103,7 @@ open_game() {
         Linux*)
             xdg-open http://localhost:5173 ;;
         MINGW*|MSYS*|CYGWIN*|Windows_NT*)
-            start http://localhost:5173 ;;
+            cmd.exe /c start http://localhost:5173 ;;
         *)
             echo -e "${YELLOW}Could not detect OS, please open http://localhost:5173 manually${NC}" ;;
     esac
