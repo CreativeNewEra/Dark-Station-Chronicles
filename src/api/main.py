@@ -93,8 +93,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Simple in-memory session store
-sessions: Dict[str, StoryManager] = {}
+# Simple in-memory session store with TTL
+sessions: Dict[str, Dict[str, Any]] = {}  # Stores {'manager': StoryManager, 'last_access': datetime}
+SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "3600"))  # Default TTL is 1 hour
 
 
 # Dependency providers
