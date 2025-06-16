@@ -233,9 +233,17 @@ class AIManager:
             invalid_default = env_backend not in self.backends or not (backend.is_available() if backend else False)
             if invalid_default:
                 logger.warning(
-                    f"Invalid DEFAULT_AI_BACKEND '{env_backend}' - falling back to 'claude'"
+                    f"Invalid DEFAULT_AI_BACKEND '{env_backend}' - attempting to find an available backend"
                 )
-            self._current_backend = "claude"
+                for name, backend in self.backends.items():
+                    if backend.is_available():
+                        self._current_backend = name
+                        logger.info(f"Falling back to available backend: '{name}'")
+                        break
+                else:
+                    raise RuntimeError("No available AI backends found.")
+            else:
+                self._current_backend = env_backend
 
         # Conversation memory
         self.conversation_history = []
