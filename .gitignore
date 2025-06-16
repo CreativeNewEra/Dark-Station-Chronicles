@@ -133,3 +133,6 @@ dist
 # Python cache files
 __pycache__/
 *.pyc
+
+# Game save files
+saves/
