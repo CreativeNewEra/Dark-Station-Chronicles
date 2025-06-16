@@ -1,4 +1,11 @@
 import * as React from 'react'; // Changed import style
+
+/**
+ * React error boundary that catches render errors and displays a fallback UI.
+ *
+ * @param props.children - Components wrapped by the boundary.
+ * @param props.fallback - Optional element to render when an error occurs.
+ */
 import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -48,7 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="p-4 m-4 bg-red-100 border border-red-400 text-red-700 rounded text-center">
           <h2 className="text-lg font-semibold mb-2">Oops! Something went wrong.</h2>
           <p className="mb-2">
-            We're sorry for the inconvenience. Please try refreshing the page.
+            We&apos;re sorry for the inconvenience. Please try refreshing the page.
           </p>
           {/* Vite uses import.meta.env.DEV for development mode check */}
           {import.meta.env.DEV && this.state.error && (
