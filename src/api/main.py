@@ -4,7 +4,7 @@ import datetime  # Added for timestamping save files
 from dotenv import load_dotenv
 from typing import Optional, Dict, List, Literal, Any  # Added Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -92,17 +92,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize managers
-try:
-    story_manager = StoryManager()
-    ai_manager = AIManager()
-except Exception as e:
-    logger.error(f"Error initializing managers: {e}")
-    raise
+
+# Dependency providers
+def get_story_manager() -> StoryManager:
+    """Create a new StoryManager for each request."""
+    try:
+        return StoryManager()
+    except Exception as e:
+        logger.error(f"Error creating StoryManager: {e}")
+        raise
+
+
+def get_ai_manager() -> AIManager:
+    """Create a new AIManager for each request."""
+    try:
+        return AIManager()
+    except Exception as e:
+        logger.error(f"Error creating AIManager: {e}")
+        raise
 
 
 # --- Helper function to get current game state ---
-def get_game_state_details() -> Optional[GameState]:
+def get_game_state_details(story_manager: StoryManager) -> Optional[GameState]:
     """Helper function to get current game state details"""
     try:
         if not story_manager.player:
@@ -146,7 +157,11 @@ async def read_root():
 
 
 @app.post("/game/command", response_model=GameResponse)
-async def process_command_endpoint(command: GameCommand):
+async def process_command_endpoint(
+    command: GameCommand,
+    story_manager: StoryManager = Depends(get_story_manager),
+    ai_manager: AIManager = Depends(get_ai_manager),
+):
     """Process a game command"""
     try:
         logger.info(
@@ -158,7 +173,7 @@ async def process_command_endpoint(command: GameCommand):
 
         if command.use_ai:
             try:
-                current_game_state = get_game_state_details()
+                current_game_state = get_game_state_details(story_manager)
                 state_dict_for_ai = (
                     current_game_state.dict() if current_game_state else {}
                 )
@@ -183,7 +198,10 @@ async def process_command_endpoint(command: GameCommand):
                 logger.error(f"AI enhancement failed: {ai_error}")
                 response_text += "\n\n(AI enhancement encountered an error.)"
 
-        return GameResponse(message=response_text, game_state=get_game_state_details())
+        return GameResponse(
+            message=response_text,
+            game_state=get_game_state_details(story_manager),
+        )
 
     except Exception as e:
         logger.error(f"Error processing command: {e}")
@@ -194,21 +212,29 @@ async def process_command_endpoint(command: GameCommand):
 
 
 @app.get("/game/start", response_model=GameResponse)
-async def start_game_endpoint():
+async def start_game_endpoint(
+    story_manager: StoryManager = Depends(get_story_manager),
+):
     """Initialize a new game session or get opening text"""
     try:
         # Re-initialize story_manager for a fresh game start if desired,
         # or ensure it's in a clean state. For now, just gets opening text.
         # story_manager.__init__() # Uncomment if a full reset is needed on /game/start
         opening_text = story_manager.get_opening_text()
-        return GameResponse(message=opening_text, game_state=get_game_state_details())
+        return GameResponse(
+            message=opening_text,
+            game_state=get_game_state_details(story_manager),
+        )
     except Exception as e:
         logger.error(f"Error starting game: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/game/switch-model")
-async def switch_model_endpoint(request: SwitchModelRequest):
+async def switch_model_endpoint(
+    request: SwitchModelRequest,
+    ai_manager: AIManager = Depends(get_ai_manager),
+):
     """Switch between AI models"""
     try:
         success = ai_manager.switch_backend(request.model)
@@ -223,10 +249,12 @@ async def switch_model_endpoint(request: SwitchModelRequest):
 
 
 @app.get("/game/state", response_model=Optional[GameState])
-async def get_current_state_endpoint():
+async def get_current_state_endpoint(
+    story_manager: StoryManager = Depends(get_story_manager),
+):
     """Get current game state"""
     try:
-        state = get_game_state_details()
+        state = get_game_state_details(story_manager)
         if not state:
             # It's possible a game hasn't started or an error occurred.
             # Depending on desired behavior, could return 404 or an empty/default state.
@@ -246,7 +274,10 @@ async def get_current_state_endpoint():
 
 
 @app.post("/game/save", response_model=GameResponse)
-async def save_game_endpoint(request: SaveGameRequest):
+async def save_game_endpoint(
+    request: SaveGameRequest,
+    story_manager: StoryManager = Depends(get_story_manager),
+):
     """Saves the current game state."""
     try:
         filename = request.filename
@@ -262,7 +293,10 @@ async def save_game_endpoint(request: SaveGameRequest):
         message = story_manager.save_game(filename)
         if "Error" in message:
             raise HTTPException(status_code=500, detail=message)
-        return GameResponse(message=message, game_state=get_game_state_details())
+        return GameResponse(
+            message=message,
+            game_state=get_game_state_details(story_manager),
+        )
     except HTTPException:
         raise  # Re-raise HTTPException to preserve status code and detail
     except Exception as e:
@@ -271,7 +305,10 @@ async def save_game_endpoint(request: SaveGameRequest):
 
 
 @app.post("/game/load", response_model=GameResponse)
-async def load_game_endpoint(request: LoadGameRequest):
+async def load_game_endpoint(
+    request: LoadGameRequest,
+    story_manager: StoryManager = Depends(get_story_manager),
+):
     """Loads a game state from a file."""
     try:
         filename = request.filename
@@ -285,7 +322,10 @@ async def load_game_endpoint(request: LoadGameRequest):
             raise HTTPException(
                 status_code=400, detail=message
             )  # Bad request if file is corrupted etc.
-        return GameResponse(message=message, game_state=get_game_state_details())
+        return GameResponse(
+            message=message,
+            game_state=get_game_state_details(story_manager),
+        )
     except HTTPException:
         raise
     except Exception as e:
