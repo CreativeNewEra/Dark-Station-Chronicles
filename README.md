@@ -83,6 +83,7 @@ This will:
 - Set up a virtual environment
 - Install Python dependencies
 - Configure the frontend
+- Install Git hooks with `pre-commit install`
 
 ### Environment Configuration
 Copy `.env.template` to `.env` and add your settings:
