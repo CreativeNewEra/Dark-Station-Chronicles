@@ -94,8 +94,12 @@ app.add_middleware(
 )
 
 # Simple in-memory session store with TTL
-sessions: Dict[str, Dict[str, Any]] = {}  # Stores {'manager': StoryManager, 'last_access': datetime}
-SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "3600"))  # Default TTL is 1 hour
+sessions: Dict[str, Dict[str, Any]] = (
+    {}
+)  # Stores {'manager': StoryManager, 'last_access': datetime}
+SESSION_TTL_SECONDS = int(
+    os.getenv("SESSION_TTL_SECONDS", "3600")
+)  # Default TTL is 1 hour
 
 
 # Dependency providers
@@ -109,7 +113,9 @@ def get_story_manager(request: Request, response: Response) -> StoryManager:
         story_manager = StoryManager()
         session_id = str(uuid.uuid4())
         sessions[session_id] = story_manager
-        response.set_cookie("session-id", session_id, httponly=True, secure=True, samesite="Lax")
+        response.set_cookie(
+            "session-id", session_id, httponly=True, secure=False, samesite="Lax"
+        )
         return story_manager
     except Exception as e:
         logger.error(f"Error creating StoryManager: {e}")

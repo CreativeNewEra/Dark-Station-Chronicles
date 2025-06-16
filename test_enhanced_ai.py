@@ -107,3 +107,43 @@ def test_switch_backend_unavailable(mocked_manager):
     manager.backends["llama"].model = None
     assert not manager.switch_backend("llama")
     assert manager.current_backend == "claude"
+
+
+def test_invalid_default_backend(monkeypatch, caplog):
+    caplog.set_level("WARNING")
+    monkeypatch.setenv("DEFAULT_AI_BACKEND", "invalid")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "key")
+    monkeypatch.setenv("LLAMA_MODEL_PATH", "/fake/model.bin")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai")
+    monkeypatch.setenv("GEMINI_API_KEY", "gem")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "router")
+    claude_client = MagicMock()
+    claude_client.messages.create.return_value = MagicMock(
+        content=[MagicMock(text="claude")]
+    )
+    llama_model = MagicMock()
+    llama_model.return_value = {"choices": [{"text": "llama"}]}
+    openai_client = MagicMock()
+    openai_client.chat.completions.create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content="openai"))]
+    )
+    gem_model = MagicMock()
+    gem_model.generate_content.return_value = MagicMock(text="gemini")
+    router_client = MagicMock()
+    router_client.chat.completions.create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content="router"))]
+    )
+    with patch("src.ai.ai_manager.anthropic.Client", return_value=claude_client), patch(
+        "src.ai.ai_manager.os.path.exists", return_value=True
+    ), patch("src.ai.ai_manager.Llama", return_value=llama_model), patch(
+        "src.ai.ai_manager.openai.OpenAI", side_effect=[openai_client, router_client]
+    ), patch(
+        "src.ai.ai_manager.genai.GenerativeModel", return_value=gem_model
+    ), patch(
+        "src.ai.ai_manager.genai.configure"
+    ):
+        manager = AIManager()
+        assert manager.current_backend == "claude"
+        assert any(
+            "Invalid DEFAULT_AI_BACKEND" in rec.message for rec in caplog.records
+        )
