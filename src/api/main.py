@@ -3,7 +3,7 @@ import os
 import datetime  # Added for timestamping save files
 import uuid
 from dotenv import load_dotenv
-from typing import Optional, Dict, List, Literal, Any  # Added Any
+from typing import Optional, Dict, List, Literal, Any
 
 from fastapi import FastAPI, HTTPException, Depends, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,29 +18,26 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
+# Tuple of supported AI model names used throughout the API
+MODEL_NAMES: tuple[str, ...] = (
+    "claude",
+    "llama",
+    "openai",
+    "gemini",
+    "openrouter",
+)
+
 # --- Model classes ---
 
 
 class SwitchModelRequest(BaseModel):
-    model: Literal[
-        "claude",
-        "llama",
-        "openai",
-        "gemini",
-        "openrouter",
-    ]
+    model: Literal[*MODEL_NAMES]
 
 
 class GameCommand(BaseModel):
     command: str
     use_ai: bool = False
-    model: Literal[
-        "claude",
-        "llama",
-        "openai",
-        "gemini",
-        "openrouter",
-    ] = "claude"
+    model: Literal[*MODEL_NAMES] = "claude"
 
 
 class GameState(BaseModel):

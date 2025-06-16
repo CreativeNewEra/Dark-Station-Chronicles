@@ -175,6 +175,7 @@ response = ai_manager.generate_response(
 - `GameCommand`: Player input with AI options
 - `GameState`: Complete game state representation
 - `SwitchModelRequest`: Model switching requests
+- `MODEL_NAMES`: Tuple listing valid AI backend identifiers
 
 ### 4. Game Interface (`frontend/src/components/GameInterface.tsx`)
 
