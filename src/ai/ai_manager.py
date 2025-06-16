@@ -160,7 +160,9 @@ class GeminiBackend(AIModelBackend):
                 logger.error(f"Failed to initialize Gemini model: {e}")
         else:
             self.model = None
-            logger.warning("google-generativeai package not available or API key missing")
+            logger.warning(
+                "google-generativeai package not available or API key missing"
+            )
 
     def generate_response(self, prompt: str) -> str:
         if not self.model:

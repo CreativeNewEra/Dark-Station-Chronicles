@@ -32,7 +32,9 @@ def mocked_manager(monkeypatch):
         "src.ai.ai_manager.os.path.exists", return_value=True
     ), patch("src.ai.ai_manager.Llama", return_value=llama_model), patch(
         "src.ai.ai_manager.openai.OpenAI", side_effect=[openai_client, router_client]
-    ), patch("src.ai.ai_manager.genai.GenerativeModel", return_value=gem_model), patch(
+    ), patch(
+        "src.ai.ai_manager.genai.GenerativeModel", return_value=gem_model
+    ), patch(
         "src.ai.ai_manager.genai.configure"
     ):
         manager = AIManager()
@@ -49,7 +51,14 @@ def test_backend_switching(mocked_manager):
 
 
 def test_game_responses(mocked_manager):
-    manager, claude_client, llama_model, openai_client, gem_model, router_client = mocked_manager
+    (
+        manager,
+        claude_client,
+        llama_model,
+        openai_client,
+        gem_model,
+        router_client,
+    ) = mocked_manager
     game_state = {
         "current_room": "bridge",
         "player_stats": {"health": 100},

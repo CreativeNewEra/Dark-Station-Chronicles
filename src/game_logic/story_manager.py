@@ -128,6 +128,7 @@ class StoryManager:
     def save_game(self, filename: str) -> str:
         """Saves the current game state to a JSON file."""
         import re
+
         # Only allow filenames with alphanumerics, underscores, hyphens, and .json extension
         if not re.fullmatch(r"[A-Za-z0-9_\-]+\.json", filename):
             return "Error: Invalid filename. Use only letters, numbers, underscores, hyphens, and end with .json."
@@ -166,16 +167,21 @@ class StoryManager:
             self.player.level = player_data.get("level", self.player.level)
             self.player.exp = player_data.get("exp", self.player.exp)
             self.player.inventory = player_data.get("inventory", self.player.inventory)
-            self.player.character_class = player_data.get("character_class", self.player.character_class)
-            
+            self.player.character_class = player_data.get(
+                "character_class", self.player.character_class
+            )
+
             # Restore current room
             current_room_data = game_state.get("current_room")
-            if not isinstance(current_room_data, str) or current_room_data not in self.rooms:
+            if (
+                not isinstance(current_room_data, str)
+                or current_room_data not in self.rooms
+            ):
                 # Fallback to start room if loaded room is invalid, or handle as error
                 # For now, let's be strict and consider it an error.
                 return "Error: Invalid save file format (current_room data missing, malformed, or invalid)."
             self.current_room = current_room_data
-            
+
             return f"Game loaded successfully from {filename}.\n\n{self.rooms[self.current_room].description}"
 
         except IOError as e:
