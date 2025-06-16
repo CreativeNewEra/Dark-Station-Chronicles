@@ -96,6 +96,19 @@ class StoryManager:
         return "I don't understand that command."
 
     def _handle_movement(self, direction: str) -> str:
+        """Handle moving the player between rooms.
+
+        Parameters
+        ----------
+        direction: str
+            Cardinal direction requested by the player.
+
+        Returns
+        -------
+        str
+            Description of the new room if the exit exists, otherwise an error
+            message.
+        """
         current_room = self.rooms[self.current_room]
         if direction in current_room.exits:
             self.current_room = current_room.exits[direction]
@@ -105,6 +118,19 @@ class StoryManager:
         return f"You cannot go {direction} from here."
 
     def _handle_examine(self, command: str) -> str:
+        """Provide information about the specified target.
+
+        Parameters
+        ----------
+        command: str
+            Full examine command issued by the player.
+
+        Returns
+        -------
+        str
+            Description of the current room, player stats, or a generic message
+            depending on the target.
+        """
         target = command[8:].strip()  # Remove "examine " from the start
 
         # Add some basic examination responses
@@ -116,6 +142,18 @@ class StoryManager:
         return f"You examine the {target}, but find nothing particularly interesting."
 
     def _handle_class_selection(self, command: str) -> str:
+        """Set the player's class based on the selection command.
+
+        Parameters
+        ----------
+        command: str
+            Command containing the desired class name.
+
+        Returns
+        -------
+        str
+            Confirmation text if the class is valid or an error message.
+        """
         class_name = command.split()[-1].lower()
         valid_classes = ["cybernetic", "psionic", "hunter"]
 
