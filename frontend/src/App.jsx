@@ -1,4 +1,4 @@
-import GameInterface from './components/GameInterface.tsx'
+import GameInterface from './components/GameInterface'
 
 function App() {
   return (
