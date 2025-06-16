@@ -195,7 +195,7 @@ async def process_command_endpoint(
             try:
                 current_game_state = get_game_state_details(story_manager)
                 state_dict_for_ai = (
-                    current_game_state.dict() if current_game_state else {}
+                    current_game_state.model_dump() if current_game_state else {}
                 )
 
                 if command.model != ai_manager.current_backend:
