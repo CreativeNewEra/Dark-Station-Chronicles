@@ -12,7 +12,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
       <ul className="space-y-1">
         {Object.entries(stats).map(([key, value]) => (
           <li key={key} className="flex justify-between">
-            <span className="capitalize">{key.replace('_', ' ')}</span>
+            <span className="capitalize">{key.replace(/_/g, ' ')}</span>
             <span>{String(value)}</span>
           </li>
         ))}
