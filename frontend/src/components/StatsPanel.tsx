@@ -1,9 +1,15 @@
 import React from 'react';
 
+/**
+ * Props for {@link StatsPanel}.
+ *
+ * @property stats - Key/value pairs representing player stats.
+ */
 interface StatsPanelProps {
   stats: Record<string, number>;
 }
 
+/** Displays a simple list of player statistics. */
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => (
   <div className="mb-4">
     <h2 className="text-lg font-semibold mb-2">Stats</h2>

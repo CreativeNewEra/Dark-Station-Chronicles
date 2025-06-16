@@ -1,5 +1,12 @@
 import React from 'react';
 
+/**
+ * Scrollable container displaying the history of game messages.
+ *
+ * @param props.messages - Array of messages to render.
+ * @param ref - Reference to allow parent components to scroll to bottom.
+ */
+
 import { Message } from '../types';
 
 interface MessageListProps {
@@ -17,5 +24,7 @@ const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(
     </div>
   )
 );
+
+MessageList.displayName = 'MessageList';
 
 export default MessageList;

@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+
+/**
+ * Primary UI component that manages game state and player interactions.
+ * No props are required; it internally handles fetching and rendering data.
+ */
 import StatsPanel from './StatsPanel';
 import ModelSelector from './ModelSelector';
 import MessageList from './MessageList';
