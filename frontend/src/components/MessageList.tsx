@@ -1,9 +1,6 @@
 import React from 'react';
 
-export interface Message {
-  type: string;
-  content: string;
-}
+import { Message } from '../types';
 
 interface MessageListProps {
   messages: Message[];
